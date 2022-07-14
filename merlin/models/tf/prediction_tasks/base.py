@@ -4,7 +4,7 @@ import tensorflow as tf
 from keras.utils.generic_utils import to_snake_case
 from tensorflow.keras.layers import Layer
 
-from merlin.models.tf.blocks.core.base import (
+from merlin.models.tf.core.base import (
     Block,
     BlockType,
     ContextMixin,
@@ -12,7 +12,7 @@ from merlin.models.tf.blocks.core.base import (
     PredictionOutput,
     name_fn,
 )
-from merlin.models.tf.blocks.core.combinators import ParallelBlock
+from merlin.models.tf.core.combinators import ParallelBlock
 from merlin.models.tf.typing import TabularData, TensorOrTabularData
 from merlin.models.tf.utils import tf_utils
 from merlin.models.utils.schema_utils import tensorflow_metadata_json_to_schema
@@ -127,16 +127,22 @@ class PredictionTask(Layer, ContextMixin):
 
         return out
 
+    def build(self, input_shape, features_shape=None):
+        if self.pre:
+            self.pre.build(input_shape)
+
+        return super().build(input_shape)
+
     def __call__(self, *args, **kwargs):
         inputs = self.pre_call(*args, **kwargs)
 
         # This will call the `call` method implemented by the super class.
         outputs = super().__call__(inputs, **kwargs)  # noqa
 
-        if "targets" in kwargs:
+        if kwargs.get("training", False) or kwargs.get("testing", False):
             targets = kwargs.get("targets", {})
             if isinstance(targets, dict) and self.target_name:
-                targets = targets[self.target_name]
+                targets = targets.get(self.target_name, targets)
 
             if isinstance(outputs, dict) and self.target_name and self.task_name in outputs:
                 outputs = outputs[self.task_name]

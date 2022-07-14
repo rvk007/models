@@ -7,7 +7,7 @@ import six
 import tensorflow as tf
 from tensorflow.keras.layers import Layer
 
-from merlin.models.tf.blocks.core.base import (
+from merlin.models.tf.core.base import (
     Block,
     BlockType,
     NoOp,
@@ -15,7 +15,7 @@ from merlin.models.tf.blocks.core.base import (
     is_input_block,
     right_shift_layer,
 )
-from merlin.models.tf.blocks.core.tabular import Filter, TabularAggregationType, TabularBlock
+from merlin.models.tf.core.tabular import Filter, TabularAggregationType, TabularBlock
 from merlin.models.tf.utils import tf_utils
 from merlin.models.tf.utils.tf_utils import call_layer
 from merlin.models.utils import schema_utils
@@ -592,7 +592,7 @@ class ResidualBlock(WithShortcut):
         strict: bool = False,
         **kwargs,
     ):
-        from merlin.models.tf.blocks.core.aggregation import SumResidual
+        from merlin.models.tf.core.aggregation import SumResidual
 
         super().__init__(
             block,
@@ -638,8 +638,16 @@ class Cond(Layer):
         else:
             false_output_shape = input_shape
 
-        if true_output_shape != false_output_shape:
-            raise ValueError("Both true and false branches must return the same output shape")
+        try:
+            if isinstance(true_output_shape, dict):
+                for key in true_output_shape.keys():
+                    true_output_shape[key].assert_is_compatible_with(false_output_shape[key])
+            else:
+                true_output_shape.assert_is_compatible_with(false_output_shape)
+        except ValueError as exc:
+            raise ValueError(
+                "Both true and false branches must return the same output shape"
+            ) from exc
 
         return true_output_shape
 
