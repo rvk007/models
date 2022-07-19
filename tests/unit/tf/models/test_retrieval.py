@@ -12,7 +12,9 @@ from merlin.models.tf.metrics.topk import (
     RecallAt,
     TopKMetricsAggregator,
 )
+from merlin.models.tf.utils import testing_utils
 from merlin.schema import Tags
+from tests.common.tf.retrieval import retrieval_tests_common
 
 
 @pytest.mark.parametrize("run_eagerly", [True, False])
@@ -52,6 +54,16 @@ def test_two_tower_model(music_streaming_data: Dataset, run_eagerly, num_epochs=
     losses = model.fit(music_streaming_data, batch_size=50, epochs=num_epochs)
     assert len(losses.epoch) == num_epochs
     assert all(measure >= 0 for metric in losses.history for measure in losses.history[metric])
+
+    query_features = testing_utils.get_model_inputs(
+        music_streaming_data.schema.select_by_tag(Tags.USER), ["user_genres"]
+    )
+    testing_utils.test_model_signature(model.first.query_block(), query_features, ["output_1"])
+
+    item_features = testing_utils.get_model_inputs(
+        music_streaming_data.schema.select_by_tag(Tags.ITEM), ["item_genres"]
+    )
+    testing_utils.test_model_signature(model.first.item_block(), item_features, ["output_1"])
 
 
 def test_two_tower_model_l2_reg(testing_data: Dataset):
@@ -244,6 +256,44 @@ def test_two_tower_retrieval_model_with_topk_metrics_aggregator(
         ecommerce_data, batch_size=10, item_corpus=ecommerce_data, return_dict=True
     )
     assert set(metrics.keys()) == set(expected_metrics_all)
+
+
+def test_two_tower_advanced_options(ecommerce_data):
+    train_ds, eval_ds = ecommerce_data, ecommerce_data
+    metrics = retrieval_tests_common.train_eval_two_tower_for_lastfm(
+        train_ds,
+        eval_ds,
+        train_epochs=1,
+        train_steps_per_epoch=None,
+        eval_steps=None,
+        train_batch_size=16,
+        eval_batch_size=16,
+        topk_metrics_cutoffs="10",
+        log_to_wandb=False,
+    )
+    assert metrics["loss-final"] > 0.0
+    assert metrics["runtime_sec-final"] > 0.0
+    assert metrics["avg_examples_per_sec-final"] > 0.0
+    assert metrics["recall_at_10-final"] > 0.0
+
+
+def test_mf_advanced_options(ecommerce_data):
+    train_ds, eval_ds = ecommerce_data, ecommerce_data
+    metrics = retrieval_tests_common.train_eval_mf_for_lastfm(
+        train_ds,
+        eval_ds,
+        train_epochs=1,
+        train_steps_per_epoch=None,
+        eval_steps=None,
+        train_batch_size=16,
+        eval_batch_size=16,
+        topk_metrics_cutoffs="10",
+        log_to_wandb=False,
+    )
+    assert metrics["loss-final"] > 0.0
+    assert metrics["runtime_sec-final"] > 0.0
+    assert metrics["avg_examples_per_sec-final"] > 0.0
+    assert metrics["recall_at_10-final"] > 0.0
 
 
 # def test_retrieval_evaluation_without_negatives(ecommerce_data: Dataset):
