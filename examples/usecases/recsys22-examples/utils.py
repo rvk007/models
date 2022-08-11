@@ -14,7 +14,7 @@ def process_item_features(DATA_FOLDER, category_coverage_min=0.8):
     df = df[df.feature_category_id.isin(categories_to_keep)]
     df = df[~df.feature_category_id.isin([[30, 4, 46, 28, 53, 1]])]
     df = df.pivot_table('feature_value_id', ['item_id'], 'feature_category_id').reset_index()
-    df.columns = [str(col)+'_f' if isinstance(col, int) else str(col) for col in df.columns]
+    df.columns = ['f_'+str(col) if isinstance(col, int) else str(col) for col in df.columns]
 #     df.columns = [str(col) for col in df.columns]
     return df
 
