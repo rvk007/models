@@ -45,7 +45,12 @@ from merlin.models.tf.blocks.dlrm import DLRMBlock
 from merlin.models.tf.blocks.experts import CGCBlock, MMOEBlock, MMOEGate
 from merlin.models.tf.blocks.interaction import DotProductInteraction, FMPairwiseInteraction
 from merlin.models.tf.blocks.mlp import DenseResidualBlock, MLPBlock
-from merlin.models.tf.blocks.multi_optimizers import MultiOptimizer, OptimizerBlocks
+from merlin.models.tf.blocks.optimizer import (
+    LazyAdam,
+    MultiOptimizer,
+    OptimizerBlocks,
+    split_embeddings_on_size,
+)
 from merlin.models.tf.blocks.retrieval.base import DualEncoderBlock, ItemRetrievalScorer
 from merlin.models.tf.blocks.retrieval.matrix_factorization import (
     MatrixFactorizationBlock,
@@ -102,7 +107,7 @@ from merlin.models.tf.metrics.topk import (
 )
 from merlin.models.tf.models import benchmark
 from merlin.models.tf.models.base import BaseModel, Model, RetrievalModel
-from merlin.models.tf.models.ranking import DCNModel, DeepFMModel, DLRMModel
+from merlin.models.tf.models.ranking import DCNModel, DeepFMModel, DLRMModel, WideAndDeepModel
 from merlin.models.tf.models.retrieval import (
     MatrixFactorizationModel,
     TwoTowerModel,
@@ -191,6 +196,9 @@ __all__ = [
     "MultiClassClassificationTask",
     "RegressionTask",
     "MultiOptimizer",
+    "LazyAdam",
+    "OptimizerBlocks",
+    "split_embeddings_on_size",
     "OptimizerBlocks",
     "ItemRetrievalTask",
     "ItemRetrievalScorer",
@@ -221,6 +229,7 @@ __all__ = [
     "DLRMModel",
     "DCNModel",
     "DeepFMModel",
+    "WideAndDeepModel",
     "losses",
     "LossType",
     "sample_batch",
