@@ -15,7 +15,6 @@ def process_item_features(DATA_FOLDER, category_coverage_min=0.8):
     df = df[~df.feature_category_id.isin([[30, 4, 46, 28, 53, 1]])]
     df = df.pivot_table('feature_value_id', ['item_id'], 'feature_category_id').reset_index()
     df.columns = ['f_'+str(col) if isinstance(col, int) else str(col) for col in df.columns]
-#     df.columns = [str(col) for col in df.columns]
     return df
 
 # add timestamp and day features
@@ -59,10 +58,7 @@ def get_drepessi_recsys2022_dataset(input_path):
     valid_purchases = valid_purchases[['session_id','purchase_id']]
     valid = cudf.merge(valid_session, valid_purchases, on='session_id', how='left')
     
-    purchases = purchases[['session_id','purchase_id']]
-    sessions = cudf.merge(sessions, purchases, on='session_id', how='left')
-    
     train = train.fillna(-1)
     valid = valid.fillna(-1)
-    sessions = sessions.fillna(-1)
-    return train, valid, sessions
+    
+    return train, valid
